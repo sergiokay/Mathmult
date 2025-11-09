@@ -1,103 +1,109 @@
-<!DOCTYPE html>
-<html lang="en-us">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity WebGL Player | Maths</title>
-    <link rel="shortcut icon" href="TemplateData/favicon.ico">
-    <link rel="stylesheet" href="TemplateData/style.css">
-    <link rel="manifest" href="manifest.webmanifest">
-  </head>
-  <body>
-    <div id="unity-container">
-      <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
-      <div id="unity-loading-bar">
-        <div id="unity-logo"></div>
-        <div id="unity-progress-bar-empty">
-          <div id="unity-progress-bar-full"></div>
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Blackink — Configurador</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="header">
+    <h1>Blackink — Configurador</h1>
+    <div class="header-right">
+      <button id="theme-toggle" class="btn" title="Cambiar tema">🌙</button>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Pestañas">
+    <button class="tab active" data-tab="fuentes" role="tab" aria-selected="true">🔤 Fuentes</button>
+    <button class="tab" data-tab="modelos" role="tab" aria-selected="false">🎨 Modelos</button>
+    <button class="tab" data-tab="favoritos" role="tab" aria-selected="false">⭐ Favoritos</button>
+    <button class="tab" data-tab="comprar" role="tab" aria-selected="false">🛒 Compras</button>
+    <button class="tab" data-tab="pedidos" role="tab" aria-selected="false">📦 Pedidos</button>
+  </nav>
+
+  <section class="input-area">
+    <label for="texto">Escribe el texto del cliente:</label>
+    <input id="texto" type="text" placeholder="Ej: Blackink" value="Blackink" />
+  </section>
+
+  <main id="contenedor-principal">
+    <section id="fuentes" class="fuentes-lista" aria-live="polite"></section>
+    <section id="modelos" class="modelos-lista hidden" aria-live="polite"></section>
+    <section id="favoritos" class="favoritos-lista hidden" aria-live="polite"></section>
+    <section id="comprar" class="compras-lista hidden" aria-live="polite"></section>
+    <section id="pedidos" class="pedidos-lista hidden" aria-live="polite"></section>
+  </main>
+
+  <template id="template-fuente">
+    <div class="fuente-item" role="article">
+      <div class="badge hidden" title="Cantidad en carrito"></div>
+      <div class="preview-text"></div>
+      <div class="meta">
+        <div class="nombre"></div>
+        <div class="botones">
+          <button class="btn btn-fav">☆ Favorito</button>
+          <button class="btn btn-buy">➕ Comprar</button>
         </div>
       </div>
-      <div id="unity-warning"> </div>
     </div>
-    <script>
-      window.addEventListener("load", function () {
-        if ("serviceWorker" in navigator) {
-          navigator.serviceWorker.register("ServiceWorker.js");
-        }
-      });
+  </template>
 
-      var container = document.querySelector("#unity-container");
-      var canvas = document.querySelector("#unity-canvas");
-      var loadingBar = document.querySelector("#unity-loading-bar");
-      var progressBarFull = document.querySelector("#unity-progress-bar-full");
-      var warningBanner = document.querySelector("#unity-warning");
+  <template id="template-modelo">
+    <div class="modelo-item" role="article">
+      <img alt="modelo" />
+      <div class="meta">
+        <div class="nombre"></div>
+        <div class="botones">
+          <button class="btn btn-fav">☆ Favorito</button>
+          <button class="btn btn-buy">➕ Comprar</button>
+        </div>
+      </div>
+    </div>
+  </template>
 
-      // Shows a temporary message banner/ribbon for a few seconds, or
-      // a permanent error message on top of the canvas if type=='error'.
-      // If type=='warning', a yellow highlight color is used.
-      // Modify or remove this function to customize the visually presented
-      // way that non-critical warnings and error messages are presented to the
-      // user.
-      function unityShowBanner(msg, type) {
-        function updateBannerVisibility() {
-          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
-        }
-        var div = document.createElement('div');
-        div.innerHTML = msg;
-        warningBanner.appendChild(div);
-        if (type == 'error') div.style = 'background: red; padding: 10px;';
-        else {
-          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
-          setTimeout(function() {
-            warningBanner.removeChild(div);
-            updateBannerVisibility();
-          }, 5000);
-        }
-        updateBannerVisibility();
-      }
+  <!-- Modal (flujo principal es el carrito) -->
+  <div id="pedido-modal" class="modal hidden" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-panel">
+      <button id="close-pedido" class="close-btn" title="Cerrar">✕</button>
+      <h2>Crear pedido</h2>
+      <div class="pedido-preview">
+        <div class="mockup large-mock">
+          <div class="mock-text" id="pedido-font-preview">Texto</div>
+          <div class="mock-img" id="pedido-img-preview">Sin vector</div>
+        </div>
+        <div class="pedido-detalles">
+          <p><strong>Fuente:</strong> <span id="pedido-fuente"></span></p>
+          <p><strong>Modelo:</strong> <span id="pedido-modelo"></span></p>
+          <p><strong>Texto:</strong> <span id="pedido-texto"></span></p>
 
-      var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/MathMut.loader.js";
-      var config = {
-        dataUrl: buildUrl + "/MathMut.data",
-        frameworkUrl: buildUrl + "/MathMut.framework.js",
-        codeUrl: buildUrl + "/MathMut.wasm",
-        streamingAssetsUrl: "StreamingAssets",
-        companyName: "Kaykesoft",
-        productName: "Maths",
-        productVersion: "0.1",
-        showBanner: unityShowBanner,
-      };
+          <label for="pedido-tamano"><strong>Tamaño / Precio:</strong></label>
+          <select id="pedido-tamano" class="select"></select>
 
-      // By default Unity keeps WebGL canvas render target size matched with
-      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
-      // Set this to false if you want to decouple this synchronization from
-      // happening inside the engine, and you would instead like to size up
-      // the canvas DOM size and WebGL render target sizes yourself.
-      // config.matchWebGLToCanvasSize = false;
+          <div class="qty-row">
+            <label><strong>Tipo:</strong></label>
+            <label><input type="radio" name="pedido-tipo" value="unidad" checked /> Unidad</label>
+            <label><input type="radio" name="pedido-tipo" value="paquete" /> Paquete</label>
+          </div>
 
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        // Mobile device style: fill the whole browser client area with the game canvas:
-        var meta = document.createElement('meta');
-        meta.name = 'viewport';
-        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-        document.getElementsByTagName('head')[0].appendChild(meta);
-      }
+          <div class="qty-row">
+            <label for="pedido-cantidad"><strong>Cantidad:</strong></label>
+            <input id="pedido-cantidad" type="number" min="1" step="1" value="1" class="input-qty" />
+          </div>
 
-      loadingBar.style.display = "block";
+          <p><strong>Precio unitario:</strong> $<span id="pedido-precio">0</span></p>
+          <p><strong>Total:</strong> $<span id="pedido-total">0</span></p>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="confirm-pedido" class="btn btn-buy">Confirmar (1 línea)</button>
+        <button id="download-pedido" class="btn">Descargar PDF (1 línea)</button>
+      </div>
+    </div>
+  </div>
 
-      var script = document.createElement("script");
-      script.src = loaderUrl;
-      script.onload = () => {
-        createUnityInstance(canvas, config, (progress) => {
-          progressBarFull.style.width = 100 * progress + "%";
-        }).then((unityInstance) => {
-          loadingBar.style.display = "none";
-        }).catch((message) => {
-          alert(message);
-        });
-      };
-      document.body.appendChild(script);
-    </script>
-  </body>
+  <!-- jsPDF -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="script.js"></script>
+</body>
 </html>

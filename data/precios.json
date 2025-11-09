@@ -1,0 +1,37 @@
+[
+  {
+    "tamaño": "12CM",
+    "precio": 20,
+    "paquete": false
+  },
+  {
+    "tamaño": "15CM",
+    "precio": 25,
+    "paquete": false
+  },
+  {
+    "tamaño": "18CM",
+    "precio": 30,
+    "paquete": false
+  },
+  {
+    "tamaño": "30CM",
+    "precio": 100,
+    "paquete": false
+  },
+  {
+    "tamaño": "Paquete 12CM",
+    "precio": 100,
+    "paquete": true
+  },
+  {
+    "tamaño": "Paquete 15CM",
+    "precio": 125,
+    "paquete": true
+  },
+  {
+    "tamaño": "Paquete 18CM",
+    "precio": 150,
+    "paquete": true
+  }
+]
