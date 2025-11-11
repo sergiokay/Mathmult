@@ -63,10 +63,48 @@ function mostrarSeccion(tab) {
   render(tab);
 }
 
+/* ============================================================
+   === SOPORTE GITHUB PAGES: cargar desde index.json (fallback)
+   ============================================================ */
+async function cargarDesdeIndexJSON(){
+  try{
+    const r = await fetch('./index.json', { cache:'no-store' });
+    if(!r.ok) return false;
+    const data = await r.json();
+
+    // Normalizar FUENTES: aceptar "nombre.ttf" o "ruta/nombre.ttf"
+    const arrFuentes = Array.isArray(data.fuentes) ? data.fuentes : [];
+    for (const entry of arrFuentes){
+      // Si viene como ruta, úsala para FontFace; el "nombre" será el filename sin extensión
+      const isPath = /[\\/]/.test(entry);
+      const filename = isPath ? entry.split('/').pop() : entry;
+      const family = filename.replace(/\.[^/.]+$/,'');
+      try{
+        const url = isPath ? entry : `fuentes/${entry}`;
+        const ff = new FontFace(family, `url(${url})`);
+        await ff.load(); document.fonts.add(ff);
+      }catch{}
+      if(!fuentes.includes(family)) fuentes.push(family);
+    }
+
+    // Normalizar MODELOS: aceptar "ala.svg" o "vectores/ala.svg"
+    const arrModelos = Array.isArray(data.modelos) ? data.modelos : [];
+    for (const entry of arrModelos){
+      const nameOnly = entry.split('/').pop(); // el resto del código hace img.src = `vectores/${nombre}`
+      if(!modelos.includes(nameOnly)) modelos.push(nameOnly);
+    }
+    return true;
+  }catch{
+    return false;
+  }
+}
+
 /* === Carga de recursos === */
 async function cargarFuentes() {
+  // 1) Intento listar carpeta (funciona en local con servidor)
   try {
     const r = await fetch('./fuentes/');
+    if (!r.ok) throw 0;
     const html = await r.text();
     const re = /href="([^"]+\.(ttf|otf|woff2?|woff))"/gi;
     const arr = [...html.matchAll(re)].map(m => m[1]);
@@ -79,21 +117,40 @@ async function cargarFuentes() {
         await ff.load(); document.fonts.add(ff);
       } catch(e){}
     }
+    // Si se logró, salimos
+    if (fuentes.length) return;
   } catch(e){
-    contFuentes.innerHTML = `<p style="color:#ffb4b4">No se pudieron listar las fuentes. Usa Live Server y verifica /fuentes/</p>`;
+    // Ignoramos, haremos fallback
+  }
+
+  // 2) Fallback a index.json (GitHub Pages u otros entornos)
+  const ok = await cargarDesdeIndexJSON();
+  if (!ok && contFuentes){
+    contFuentes.innerHTML = `<p style="color:#ffb4b4">No se pudieron listar las fuentes. Verifica /fuentes/ o index.json</p>`;
   }
 }
+
 async function cargarModelos() {
+  // 1) Intento listar carpeta (funciona en local con servidor)
   try {
     const r = await fetch('./vectores/');
+    if (!r.ok) throw 0;
     const html = await r.text();
     const re = /href="([^"]+\.(svg|png|jpg|jpeg|webp))"/gi;
     const arr = [...html.matchAll(re)].map(m => m[1]);
     modelos = arr.map(a => a.split('/').pop());
+    if (modelos.length) return;
   } catch(e){
-    contModelos.innerHTML = `<p style="color:#ffb4b4">No se pudieron listar los modelos. Usa Live Server y verifica /vectores/</p>`;
+    // Ignoramos, haremos fallback
+  }
+
+  // 2) Fallback a index.json (GitHub Pages u otros entornos)
+  const ok = await cargarDesdeIndexJSON();
+  if (!ok && contModelos){
+    contModelos.innerHTML = `<p style="color:#ffb4b4">No se pudieron listar los modelos. Verifica /vectores/ o index.json</p>`;
   }
 }
+
 async function cargarPreciosDesdeArchivo(){
   try{
     const r = await fetch('./data/precios.json', { cache:'no-store' });

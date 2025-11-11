@@ -3,290 +3,357 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Admin — Tamaños, Precios y Objetos</title>
+  <title>Admin — Blackink Panel</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    .modelos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .modelo-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--panel);
+      text-align: center;
+      padding: 10px;
+      transition: 0.3s;
+    }
+
+    .modelo-item img {
+      max-width: 100%;
+      max-height: 150px;
+      margin: auto;
+      display: block;
+    }
+
+    .modelo-item:hover { transform: scale(1.03); }
+
+    body[data-theme="dark"] .modelo-item img.svg-thumb {
+      filter: invert(1) hue-rotate(180deg);
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .btn {
+      cursor: pointer;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      background: var(--panel);
+      color: var(--text);
+      transition: 0.2s;
+    }
+
+    .btn:hover { background: var(--accent); color: #000; }
+    .hidden { display: none !important; }
+    .hint { color: var(--muted); font-size: 13px; margin: 10px 0; }
+    .header-right { position: absolute; top: 10px; right: 15px; }
+  </style>
 </head>
 <body>
   <header class="header">
-    <h1>Admin — Tamaños, Precios y Objetos</h1>
+    <h1>🛠️ Panel de Administración — Blackink</h1>
+    <div class="header-right">
+      <button id="theme-toggle" class="btn" title="Cambiar tema">🌙</button>
+    </div>
   </header>
 
-  <!-- Pestañas -->
   <nav class="tabs" role="tablist" aria-label="Pestañas admin">
-    <button class="tab active" data-tab="precios" role="tab" aria-selected="true">💲 Precios</button>
-    <button class="tab" data-tab="objetos" role="tab" aria-selected="false">🧩 Objetos</button>
+    <button class="tab active" data-tab="precios">💲 Precios</button>
+    <button class="tab" data-tab="politicas">🧩 Políticas de modelos</button>
+    <button class="tab" data-tab="fuentes">🗂️ Fuentes y vectores</button>
   </nav>
 
   <main style="width:100%;max-width:1100px;margin:0 auto 24px auto;">
-    <!-- ====== TAB PRECIOS ====== -->
+    <!-- ===== PRECIOS ===== -->
     <section id="precios" class="seccion" aria-live="polite">
-      <p class="hint">
-        Edita la tabla. <strong>Paquete</strong> indica si ese tamaño se vende por paquete (true) o por unidad (false).<br/>
-        Al <strong>Guardar</strong> se actualiza en tu navegador y, si autorizas, se <strong>sobrescribe</strong> tu archivo
-        <code>data/precios.json</code> usando File System Access API.
-      </p>
-
+      <p class="hint">Administra los tamaños y precios de venta. “Paquete” indica si ese tamaño se vende en conjunto.</p>
       <div id="admin-table-wrap"></div>
-
-      <div class="admin-toolbar">
+      <div class="toolbar">
         <button id="add-row" class="btn">Agregar fila</button>
-        <button id="save-precios" class="btn btn-buy">Guardar</button>
+        <button id="save-precios" class="btn">Guardar</button>
         <button id="link-precios" class="btn">Vincular precios.json…</button>
-        <button id="load-default" class="btn">Cargar defaults</button>
+        <button id="load-default" class="btn">Cargar default</button>
       </div>
     </section>
 
-    <!-- ====== TAB OBJETOS ====== -->
-    <section id="objetos" class="seccion hidden" aria-live="polite">
-      <h3>Políticas por objeto (modelos)</h3>
-      <p class="hint">
-        Marca por cada vector si permite vender por <strong>unidad</strong> o únicamente por <strong>paquete</strong>.
-        Esto afecta la pestaña <strong>Compras</strong> en el configurador.
-      </p>
+    <!-- ===== POLÍTICAS ===== -->
+    <section id="politicas" class="seccion hidden" aria-live="polite">
+      <h3>Políticas de venta por modelo</h3>
+      <p class="hint">Define si un modelo puede venderse por unidad o solo por paquete.</p>
 
-      <!-- Controles rápidos -->
-      <div class="admin-toolbar">
-        <button id="pol-marcar-unidad" class="btn">Marcar todo como “Permitir unidad”</button>
-        <button id="pol-marcar-paquete" class="btn">Marcar todo como “Solo paquete”</button>
+      <div class="toolbar">
+        <button id="load-index-modelos" class="btn">📦 Cargar todos los modelos (GitHub)</button>
+        <button id="pol-marcar-unidad" class="btn">Permitir unidad a todos</button>
+        <button id="pol-marcar-paquete" class="btn">Solo paquete a todos</button>
       </div>
 
-      <!-- Grid similar a la de Modelos en index -->
-      <div id="pol-grid" class="modelos-lista"></div>
+      <div id="pol-grid" class="modelos-grid"></div>
 
-      <div class="admin-toolbar">
-        <button id="save-pol" class="btn btn-buy">Guardar políticas</button>
+      <div class="toolbar">
+        <button id="save-pol" class="btn">Guardar políticas</button>
         <button id="link-pol" class="btn">Vincular politicas_modelos.json…</button>
       </div>
+    </section>
 
-      <small class="hint">
-        Se guarda en <code>localStorage</code> y, si vinculas, también se sobrescribe <code>data/politicas_modelos.json</code>.
-      </small>
+    <!-- ===== FUENTES Y VECTORES ===== -->
+    <section id="fuentes" class="seccion hidden" aria-live="polite">
+      <h3>Fuentes y Vectores — index.json</h3>
+      <p class="hint">Detecta automáticamente las fuentes y vectores desde las carpetas locales y permite guardar el index.json en la raíz.</p>
+
+      <div class="toolbar">
+        <button id="generateIndexBtn" class="btn">💾 Generar index.json</button>
+      </div>
+
+      <div id="statusFuentes" class="hint">Fuentes detectadas: 0</div>
+      <div id="statusVectores" class="hint">Vectores detectados: 0</div>
     </section>
   </main>
 
   <script>
-    (function(){
-      // ====== Tabs ======
-      const tabs = document.querySelectorAll('.tab');
-      const secPrecios = document.getElementById('precios');
-      const secObjetos = document.getElementById('objetos');
-      function showTab(id){
-        [secPrecios, secObjetos].forEach(s => s.classList.add('hidden'));
-        if (id === 'precios') secPrecios.classList.remove('hidden');
-        if (id === 'objetos') secObjetos.classList.remove('hidden');
-      }
-      tabs.forEach(t => t.addEventListener('click', ()=>{
-        document.querySelector('.tab.active').classList.remove('active');
+  (function(){
+    /* ========= THEME SYSTEM ========= */
+    const body = document.body;
+    const themeBtn = document.getElementById('theme-toggle');
+    function applyTheme(theme){
+      body.dataset.theme = theme;
+      localStorage.setItem('theme', theme);
+      themeBtn.textContent = theme === 'dark' ? '☀️' : '🌙';
+    }
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    applyTheme(savedTheme);
+    themeBtn.addEventListener('click', ()=> {
+      const newTheme = body.dataset.theme === 'dark' ? 'light' : 'dark';
+      applyTheme(newTheme);
+    });
+
+    /* ========= TABS ========= */
+    const tabs = document.querySelectorAll('.tab');
+    const sections = document.querySelectorAll('.seccion');
+    tabs.forEach(t=>{
+      t.addEventListener('click', ()=>{
+        document.querySelector('.tab.active')?.classList.remove('active');
         t.classList.add('active');
-        showTab(t.dataset.tab);
+        sections.forEach(s=>s.classList.add('hidden'));
+        document.getElementById(t.dataset.tab).classList.remove('hidden');
+      });
+    });
+
+    /* ========= PRECIOS ========= */
+    const wrap = document.getElementById('admin-table-wrap');
+    const addRowBtn = document.getElementById('add-row');
+    const saveBtn = document.getElementById('save-precios');
+    const linkBtn = document.getElementById('link-precios');
+    const loadBtn = document.getElementById('load-default');
+    let precios = [];
+    let fileHandlePrecios = null;
+
+    async function tryLoadPrecios(){
+      try{
+        const resp = await fetch('./data/precios.json',{cache:'no-store'});
+        if(resp.ok){ precios = await resp.json(); }
+      }catch{ precios=[]; }
+      renderPrecios();
+    }
+
+    function renderPrecios(){
+      wrap.innerHTML='';
+      const table=document.createElement('table');
+      table.className='admin-table';
+      table.innerHTML='<thead><tr><th>Tamaño</th><th>Precio</th><th>Paquete</th><th>Acción</th></tr></thead>';
+      const tbody=document.createElement('tbody');
+      precios.forEach((r,i)=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td contenteditable data-field="tamano">${r.tamaño}</td>
+          <td contenteditable data-field="precio">${r.precio}</td>
+          <td style="text-align:center"><input type="checkbox" data-field="paquete" ${r.paquete?'checked':''}></td>
+          <td><button class="btn del" data-i="${i}">🗑️</button></td>`;
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      wrap.appendChild(table);
+      wrap.querySelectorAll('.del').forEach(b=>{
+        b.onclick=()=>{precios.splice(b.dataset.i,1);renderPrecios();};
+      });
+    }
+
+    addRowBtn.onclick=()=>{precios.push({tamaño:'Nuevo',precio:0,paquete:false});renderPrecios();};
+    loadBtn.onclick=()=>{precios=[{tamaño:'Pequeño',precio:100,paquete:false}];renderPrecios();};
+
+    async function requestHandlePrecios(){
+      try{
+        const [h]=await window.showOpenFilePicker({types:[{accept:{'application/json':['.json']}}]});
+        fileHandlePrecios=h;
+        alert('Archivo precios.json vinculado');
+      }catch{}
+    }
+
+    saveBtn.onclick=async()=>{
+      const rows=wrap.querySelectorAll('tbody tr');
+      precios=[...rows].map(tr=>({
+        tamaño:tr.querySelector('[data-field="tamano"]').textContent.trim(),
+        precio:Number(tr.querySelector('[data-field="precio"]').textContent.trim())||0,
+        paquete:tr.querySelector('[data-field="paquete"]').checked
       }));
-
-      // ====== PRECIOS ======
-      const wrap = document.getElementById('admin-table-wrap');
-      const addRowBtn = document.getElementById('add-row');
-      const saveBtn = document.getElementById('save-precios');
-      const linkBtn = document.getElementById('link-precios');
-      const loadBtn = document.getElementById('load-default');
-
-      let precios = [];
-      let fileHandlePrecios = null;
-
-      async function tryLoadPrecios(){
-        try{
-          const resp = await fetch('./data/precios.json',{cache:'no-store'});
-          if(resp.ok){ precios = await resp.json(); }
-          else { const stored = localStorage.getItem('precios'); precios = stored? JSON.parse(stored): []; }
-        }catch{
-          const stored = localStorage.getItem('precios'); precios = stored? JSON.parse(stored): [];
-        }
+      localStorage.setItem('precios',JSON.stringify(precios));
+      if(!fileHandlePrecios) await requestHandlePrecios();
+      if(fileHandlePrecios){
+        const w=await fileHandlePrecios.createWritable();
+        await w.write(JSON.stringify(precios,null,2));
+        await w.close();
+        alert('precios.json actualizado');
       }
-      function renderPrecios(){
-        wrap.innerHTML = '';
-        const table = document.createElement('table');
-        table.className='admin-table';
-        const thead = document.createElement('thead');
-        thead.innerHTML = '<tr><th>Tamaño</th><th>Precio</th><th>Paquete</th><th>Acciones</th></tr>';
-        table.appendChild(thead);
-        const tbody = document.createElement('tbody');
-        precios.forEach((r,i)=>{
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td contenteditable="true" data-field="tamano">${r.tamaño}</td>
-            <td contenteditable="true" data-field="precio">${r.precio}</td>
-            <td style="text-align:center"><input type="checkbox" data-field="paquete" ${r.paquete?'checked':''}></td>
-            <td><button data-i="${i}" class="btn remove-row">Eliminar</button></td>`;
-          tbody.appendChild(tr);
-        });
-        table.appendChild(tbody);
-        wrap.appendChild(table);
+    };
+    linkBtn.onclick=requestHandlePrecios;
 
-        wrap.querySelectorAll('.remove-row').forEach(b=>{
-          b.addEventListener('click', ()=>{ const i = Number(b.dataset.i); precios.splice(i,1); renderPrecios(); });
-        });
-      }
-      function loadDefaults(){
-        precios = [
-          { "tamaño": "Pequeño", "precio": 120, "paquete": false },
-          { "tamaño": "Mediano", "precio": 180, "paquete": false },
-          { "tamaño": "Grande",  "precio": 250, "paquete": true  }
-        ];
-        localStorage.setItem('precios', JSON.stringify(precios));
-        renderPrecios();
-      }
-      addRowBtn.addEventListener('click', ()=> {
-        precios.push({tamaño:'Nuevo', precio:0, paquete:false}); renderPrecios();
-      });
+    /* ========= POLÍTICAS ========= */
+    const polGrid=document.getElementById('pol-grid');
+    const btnUnidad=document.getElementById('pol-marcar-unidad');
+    const btnPaquete=document.getElementById('pol-marcar-paquete');
+    const btnGuardarPol=document.getElementById('save-pol');
+    const btnLinkPol=document.getElementById('link-pol');
+    const btnCargarIndex=document.getElementById('load-index-modelos');
+    let politicas={};
+    let modelos=[];
+    let fileHandlePoliticas=null;
 
-      async function requestHandlePrecios(){
-        try{
-          const [handle] = await window.showOpenFilePicker({
-            multiple: false,
-            types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }],
-            excludeAcceptAllOption: true
-          });
-          fileHandlePrecios = handle;
-          alert('precios.json vinculado. Al guardar se sobrescribirá ese archivo.');
-        }catch(e){}
-      }
-      async function writeJSON(handle, jsonStr){
-        const writable = await handle.createWritable();
-        await writable.write(jsonStr);
-        await writable.close();
-      }
-      saveBtn.addEventListener('click', async ()=> {
-        const rows = wrap.querySelectorAll('tbody tr');
-        const out = [];
-        rows.forEach(tr=>{
-          const tam = tr.querySelector('[data-field="tamano"]').textContent.trim();
-          const pr  = Number(tr.querySelector('[data-field="precio"]').textContent.trim()) || 0;
-          const pk  = tr.querySelector('[data-field="paquete"]').checked;
-          out.push({tamaño: tam, precio: pr, paquete: pk});
-        });
-        precios = out;
-        localStorage.setItem('precios', JSON.stringify(out));
+    async function cargarModelos(){
+      try{
+        const r=await fetch('./vectores/');
+        const html=await r.text();
+        const re=/href="([^"]+\.(svg|png|jpg|jpeg|webp))"/gi;
+        modelos=[...html.matchAll(re)].map(m=>m[1].split('/').pop());
+      }catch{modelos=[];}
+    }
 
-        try{
-          if (!fileHandlePrecios) await requestHandlePrecios();
-          if (fileHandlePrecios){
-            await writeJSON(fileHandlePrecios, JSON.stringify(out, null, 2));
-            alert('Precios guardados y JSON sobrescrito ✔');
-          } else {
-            alert('Precios guardados en el navegador. Vincula precios.json para sobrescribir el archivo.');
-          }
-        }catch(e){
-          alert('Se guardó en el navegador, pero no se pudo escribir el archivo.');
-        }
-      });
-      linkBtn.addEventListener('click', requestHandlePrecios);
-      loadBtn.addEventListener('click', loadDefaults);
-
-      // ====== OBJETOS (políticas por modelo) ======
-      const polGrid = document.getElementById('pol-grid');
-      const savePolBtn = document.getElementById('save-pol');
-      const linkPolBtn = document.getElementById('link-pol');
-      const btnMarcarUnidad = document.getElementById('pol-marcar-unidad');
-      const btnMarcarPaquete = document.getElementById('pol-marcar-paquete');
-
-      let modelos = [];
-      let politicas = {}; // { "archivo.svg": { soloPaquete: true/false } }
-      let fileHandlePoliticas = null;
-
-      async function cargarModelos(){
-        try{
-          const r = await fetch('./vectores/');
-          const html = await r.text();
-          const re = /href="([^"]+\.(svg|png|jpg|jpeg|webp))"/gi;
-          const arr = [...html.matchAll(re)].map(m => m[1]);
-          modelos = arr.map(a => a.split('/').pop());
-        }catch{ modelos = []; }
-      }
-      async function tryLoadPoliticas(){
-        try{
-          const r = await fetch('./data/politicas_modelos.json',{cache:'no-store'});
-          if (r.ok){ politicas = await r.json(); }
-          else { const stored = localStorage.getItem('politicasModelos'); politicas = stored ? JSON.parse(stored) : {}; }
-        }catch{
-          const stored = localStorage.getItem('politicasModelos'); politicas = stored ? JSON.parse(stored) : {};
-        }
-      }
-      function renderPoliticas(){
-        polGrid.innerHTML = '';
-        modelos.forEach(m=>{
-          const card = document.createElement('div'); card.className='modelo-item';
-          const img = document.createElement('img'); img.src=`vectores/${m}`; img.alt=m;
-          if (m.endsWith('.svg')) img.classList.add('svg-thumb');
-
-          const meta = document.createElement('div'); meta.className='meta';
-          const nombre = document.createElement('div'); nombre.className='nombre'; nombre.textContent = m;
-
-          const radios = document.createElement('div'); radios.className='qty-row';
-          const rUnidad = document.createElement('input'); rUnidad.type='radio'; rUnidad.name=`pol-${m}`; rUnidad.value='unidad';
-          const lUnidad = document.createElement('label'); lUnidad.appendChild(rUnidad); lUnidad.appendChild(document.createTextNode(' Permitir unidad'));
-          const rPack = document.createElement('input'); rPack.type='radio'; rPack.name=`pol-${m}`; rPack.value='paquete';
-          const lPack = document.createElement('label'); lPack.appendChild(rPack); lPack.appendChild(document.createTextNode(' Solo paquete'));
-
-          const actual = politicas[m]?.soloPaquete ? 'paquete' : 'unidad';
-          if (actual === 'paquete') rPack.checked = true; else rUnidad.checked = true;
-
-          rUnidad.addEventListener('change', ()=>{ politicas[m] = { soloPaquete: false }; });
-          rPack.addEventListener('change', ()=>{ politicas[m] = { soloPaquete: true  }; });
-
-          radios.appendChild(lUnidad); radios.appendChild(lPack);
-          meta.appendChild(nombre); meta.appendChild(radios);
-          card.appendChild(img); card.appendChild(meta);
-          polGrid.appendChild(card);
-        });
-      }
-      async function requestHandlePoliticas(){
-        try{
-          const [handle] = await window.showOpenFilePicker({
-            multiple: false,
-            types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }],
-            excludeAcceptAllOption: true
-          });
-          fileHandlePoliticas = handle;
-          alert('politicas_modelos.json vinculado. Al guardar se sobrescribirá ese archivo.');
-        }catch(e){}
-      }
-      async function writeJSON(handle, jsonStr){
-        const writable = await handle.createWritable();
-        await writable.write(jsonStr);
-        await writable.close();
-      }
-      savePolBtn.addEventListener('click', async ()=>{
-        localStorage.setItem('politicasModelos', JSON.stringify(politicas));
-        try{
-          if (!fileHandlePoliticas) await requestHandlePoliticas();
-          if (fileHandlePoliticas){
-            await writeJSON(fileHandlePoliticas, JSON.stringify(politicas, null, 2));
-            alert('Políticas guardadas y JSON sobrescrito ✔');
-          } else {
-            alert('Políticas guardadas en el navegador. Vincula politicas_modelos.json para sobrescribir el archivo.');
-          }
-        }catch(e){
-          alert('Se guardó en el navegador, pero no se pudo escribir politicas_modelos.json.');
-        }
-      });
-      linkPolBtn.addEventListener('click', requestHandlePoliticas);
-
-      // Acciones masivas
-      btnMarcarUnidad.addEventListener('click', ()=>{
-        modelos.forEach(m => politicas[m] = { soloPaquete: false });
+    async function cargarModelosDesdeIndex(){
+      try{
+        const r=await fetch('./index.json',{cache:'no-store'});
+        if(!r.ok) return alert('No se encontró index.json');
+        const data=await r.json();
+        modelos=data.modelos||[];
         renderPoliticas();
-      });
-      btnMarcarPaquete.addEventListener('click', ()=>{
-        modelos.forEach(m => politicas[m] = { soloPaquete: true });
-        renderPoliticas();
-      });
+      }catch{alert('Error al leer index.json');}
+    }
 
-      // ====== INIT ======
-      (async ()=>{
-        await tryLoadPrecios(); renderPrecios();
-        await cargarModelos();
-        await tryLoadPoliticas(); renderPoliticas();
-        showTab('precios');
-      })();
-    })();
+    async function tryLoadPoliticas(){
+      try{
+        const r=await fetch('./data/politicas_modelos.json',{cache:'no-store'});
+        if(r.ok) politicas=await r.json();
+      }catch{politicas={};}
+    }
+
+    function renderPoliticas(){
+      polGrid.innerHTML='';
+      modelos.forEach(m=>{
+        const div=document.createElement('div');
+        div.className='modelo-item';
+        const img=document.createElement('img');
+        img.src=`vectores/${m}`;
+        img.alt=m;
+        if(m.endsWith('.svg')) img.classList.add('svg-thumb');
+        const nombre=document.createElement('div');
+        nombre.textContent=m;
+        const radios=document.createElement('div');
+        const r1=document.createElement('input');r1.type='radio';r1.name=m;r1.value='unidad';
+        const l1=document.createElement('label');l1.append(' Unidad');
+        const r2=document.createElement('input');r2.type='radio';r2.name=m;r2.value='paquete';
+        const l2=document.createElement('label');l2.append(' Paquete');
+        if(politicas[m]?.soloPaquete){r2.checked=true;}else{r1.checked=true;}
+        r1.onchange=()=>politicas[m]={soloPaquete:false};
+        r2.onchange=()=>politicas[m]={soloPaquete:true};
+        radios.append(r1,l1,r2,l2);
+        div.append(img,nombre,radios);
+        polGrid.appendChild(div);
+      });
+    }
+
+    btnUnidad.onclick=()=>{modelos.forEach(m=>politicas[m]={soloPaquete:false});renderPoliticas();};
+    btnPaquete.onclick=()=>{modelos.forEach(m=>politicas[m]={soloPaquete:true});renderPoliticas();};
+    btnCargarIndex.onclick=cargarModelosDesdeIndex;
+
+    async function requestHandlePol(){
+      try{
+        const [h]=await window.showOpenFilePicker({types:[{accept:{'application/json':['.json']}}]});
+        fileHandlePoliticas=h;alert('politicas_modelos.json vinculado');
+      }catch{}
+    }
+
+    btnGuardarPol.onclick=async()=>{
+      localStorage.setItem('politicasModelos',JSON.stringify(politicas));
+      if(!fileHandlePoliticas) await requestHandlePol();
+      if(fileHandlePoliticas){
+        const w=await fileHandlePoliticas.createWritable();
+        await w.write(JSON.stringify(politicas,null,2));
+        await w.close();
+        alert('politicas_modelos.json actualizado');
+      }
+    };
+    btnLinkPol.onclick=requestHandlePol;
+
+    /* ========= FUENTES Y VECTORES (AUTOMÁTICO) ========= */
+    const generateIndexBtn = document.getElementById('generateIndexBtn');
+    const statusFuentes = document.getElementById('statusFuentes');
+    const statusVectores = document.getElementById('statusVectores');
+
+    let fuentesList = [];
+    let vectoresList = [];
+
+    async function detectarArchivosLocales() {
+      try {
+        const fuentesResp = await fetch('./fuentes/');
+        const fuentesHTML = await fuentesResp.text();
+        const fuentes = [...fuentesHTML.matchAll(/href="([^"]+\.(ttf|otf|woff2?))"/gi)]
+          .map(m => 'fuentes/' + m[1].split('/').pop());
+        fuentesList = fuentes;
+
+        const vectoresResp = await fetch('./vectores/');
+        const vectoresHTML = await vectoresResp.text();
+        const vectores = [...vectoresHTML.matchAll(/href="([^"]+\.(svg|png|jpg|jpeg|webp))"/gi)]
+          .map(m => 'vectores/' + m[1].split('/').pop());
+        vectoresList = vectores;
+
+        statusFuentes.textContent = `Fuentes detectadas: ${fuentesList.length}`;
+        statusVectores.textContent = `Vectores detectados: ${vectoresList.length}`;
+
+        alert('✅ Carpetas detectadas correctamente');
+      } catch (err) {
+        console.error(err);
+        alert('⚠️ No se pudieron leer las carpetas locales.');
+      }
+    }
+
+    document.querySelector('[data-tab="fuentes"]').addEventListener('click', detectarArchivosLocales);
+
+    generateIndexBtn.onclick = async () => {
+      try {
+        if (!fuentesList.length && !vectoresList.length) await detectarArchivosLocales();
+        const data = { fuentes: fuentesList, modelos: vectoresList };
+        const handle = await window.showSaveFilePicker({
+          suggestedName: 'index.json',
+          types: [{ description: 'Archivo JSON', accept: { 'application/json': ['.json'] } }]
+        });
+        const writable = await handle.createWritable();
+        await writable.write(JSON.stringify(data, null, 2));
+        await writable.close();
+        alert('✅ index.json generado correctamente con rutas completas');
+      } catch (err) {
+        console.error(err);
+        alert('⚠️ Error al generar el index.json');
+      }
+    };
+
+    (async()=>{await tryLoadPrecios();await cargarModelos();await tryLoadPoliticas();renderPoliticas();})();
+  })();
   </script>
 </body>
 </html>

@@ -1,0 +1,12 @@
+{
+  "fuentes": [
+    "Roboto-Regular",
+    "Montserrat-Bold",
+    "OpenSans-Italic"
+  ],
+  "modelos": [
+    "flor.svg",
+    "montaña.png",
+    "logo1.svg"
+  ]
+}
